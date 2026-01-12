@@ -28,13 +28,13 @@ let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platfo
 function buildNapiModule(target, release = true) {
     const targetArg = target ? `--target ${target}` : "";
     const releaseArg = release ? "--release" : "";
-    child_process.execSync(`npm run build -- ${releaseArg} ${targetArg}`, { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
 }
 
 function buildProxyBin(target, release = true) {
     const targetArg = target ? `--target ${target}` : "";
     const releaseArg = release ? "--release" : "";
-    child_process.execSync(`cargo build --bin desktop_proxy ${releaseArg} ${targetArg}`, {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
+    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
 
     if (target) {
         // Copy the resulting binary to the dist folder
@@ -54,7 +54,7 @@ function buildImporterBinaries(target, release = true) {
     const bin = "bitwarden_chromium_import_helper";
     const targetArg = target ? `--target ${target}` : "";
     const releaseArg = release ? "--release" : "";
-    child_process.execSync(`cargo build --bin ${bin} ${releaseArg} ${targetArg}`);
+    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []));
 
     if (target) {
         // Copy the resulting binary to the dist folder
@@ -79,7 +79,7 @@ function buildProcessIsolation() {
 }
 
 function installTarget(target) {
-    child_process.execSync(`rustup target add ${target}`, { stdio: 'inherit', cwd: __dirname });
+    child_process.execFileSync('rustup', ['target', 'add', target], { stdio: 'inherit', cwd: __dirname });
 }
 
 if (!crossPlatform && !target) {
