@@ -85,7 +85,7 @@ jobs:
             "USQA")
               echo "azure_login_client_key_name=AZURE_CLIENT_ID_USQA" >> "$GITHUB_OUTPUT"
               echo "azure_login_subscription_id_key_name=AZURE_SUBSCRIPTION_ID_USQA" >> "$GITHUB_OUTPUT"
-              echo "retrieve_secrets_keyvault=bw-webvault-rlktusqa-kv" >> "$GITHUB_OUTPUT"
+              echo "retrieve_secrets_keyvault=****a-kv" >> "$GITHUB_OUTPUT"
               echo "environment_artifact=web-*-cloud-QA.zip" >> "$GITHUB_OUTPUT"
               echo "environment_name=Web Vault - US QA Cloud" >> "$GITHUB_OUTPUT"
               echo "environment_url=http://vault.$ENV_NAME_LOWER.bitwarden.pw" >> "$GITHUB_OUTPUT"
@@ -94,7 +94,7 @@ jobs:
             "EUQA")
               echo "azure_login_client_key_name=AZURE_CLIENT_ID_EUQA" >> "$GITHUB_OUTPUT"
               echo "azure_login_subscription_id_key_name=AZURE_SUBSCRIPTION_ID_EUQA" >> "$GITHUB_OUTPUT"
-              echo "retrieve_secrets_keyvault=webvaulteu-westeurope-qa" >> "$GITHUB_OUTPUT"
+              echo "retrieve_secrets_keyvault=****e-qa" >> "$GITHUB_OUTPUT"
               echo "environment_artifact=web-*-cloud-euqa.zip" >> "$GITHUB_OUTPUT"
               echo "environment_name=Web Vault - EU QA Cloud" >> "$GITHUB_OUTPUT"
               echo "environment_url=http://vault.$ENV_NAME_LOWER.bitwarden.pw" >> "$GITHUB_OUTPUT"
@@ -103,7 +103,7 @@ jobs:
             "USPROD")
               echo "azure_login_client_key_name=AZURE_CLIENT_ID_USPROD" >> "$GITHUB_OUTPUT"
               echo "azure_login_subscription_id_key_name=AZURE_SUBSCRIPTION_ID_USPROD" >> "$GITHUB_OUTPUT"
-              echo "retrieve_secrets_keyvault=bw-webvault-klrt-kv" >> "$GITHUB_OUTPUT"
+              echo "retrieve_secrets_keyvault=****t-kv" >> "$GITHUB_OUTPUT"
               echo "environment_artifact=web-*-cloud-COMMERCIAL.zip" >> "$GITHUB_OUTPUT"
               echo "environment_name=Web Vault - US Production Cloud" >> "$GITHUB_OUTPUT"
               echo "environment_url=http://vault.bitwarden.com" >> "$GITHUB_OUTPUT"
@@ -112,7 +112,7 @@ jobs:
             "EUPROD")
               echo "azure_login_client_key_name=AZURE_CLIENT_ID_EUPROD" >> "$GITHUB_OUTPUT"
               echo "azure_login_subscription_id_key_name=AZURE_SUBSCRIPTION_ID_EUPROD" >> "$GITHUB_OUTPUT"
-              echo "retrieve_secrets_keyvault=webvault-westeurope-prod" >> "$GITHUB_OUTPUT"
+              echo "retrieve_secrets_keyvault=****prod" >> "$GITHUB_OUTPUT"
               echo "environment_artifact=web-*-cloud-euprd.zip" >> "$GITHUB_OUTPUT"
               echo "environment_name=Web Vault - EU Production Cloud" >> "$GITHUB_OUTPUT"
               echo "environment_url=http://vault.bitwarden.eu" >> "$GITHUB_OUTPUT"
@@ -121,7 +121,7 @@ jobs:
             "USDEV")
               echo "azure_login_client_key_name=AZURE_CLIENT_ID_USDEV" >> "$GITHUB_OUTPUT"
               echo "azure_login_subscription_id_key_name=AZURE_SUBSCRIPTION_ID_USDEV" >> "$GITHUB_OUTPUT"
-              echo "retrieve_secrets_keyvault=webvault-eastus-dev" >> "$GITHUB_OUTPUT"
+              echo "retrieve_secrets_keyvault=****-dev" >> "$GITHUB_OUTPUT"
               echo "environment_artifact=web-*-cloud-usdev.zip" >> "$GITHUB_OUTPUT"
               echo "environment_name=Web Vault - US Development Cloud" >> "$GITHUB_OUTPUT"
               echo "environment_url=http://vault.$ENV_NAME_LOWER.bitwarden.pw" >> "$GITHUB_OUTPUT"
@@ -391,9 +391,10 @@ jobs:
           AZCOPY_AUTO_LOGIN_TYPE: AZCLI
           AZCOPY_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           _VAULT_NAME: ${{ steps.retrieve-secrets-azcopy.outputs.sa-bitwarden-web-vault-name }}
+          FORCE_DELETE_DESTINATION: ${{ inputs.force-delete-destination }}
         run: |
           azcopy sync ./build "https://$_VAULT_NAME.blob.core.windows.net/\$web/" \
-            --delete-destination="${{ inputs.force-delete-destination }}" --compare-hash="MD5"
+            --delete-destination="$FORCE_DELETE_DESTINATION" --compare-hash="MD5"
 
       - name: Log out from Azure
         uses: bitwarden/gh-actions/azure-logout@main
