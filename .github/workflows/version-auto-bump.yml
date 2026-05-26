@@ -14,7 +14,7 @@ jobs:
       contents: write
     steps:
       - name: Log in to Azure
-        uses: bitwarden/gh-actions/azure-login@main
+        uses: bitwarden/gh-actions/azure-login@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant_id: ${{ secrets.AZURE_TENANT_ID }}
@@ -22,13 +22,13 @@ jobs:
 
       - name: Get Azure Key Vault secrets
         id: get-kv-secrets
-        uses: bitwarden/gh-actions/get-keyvault-secrets@main
+        uses: bitwarden/gh-actions/get-keyvault-secrets@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           keyvault: gh-org-bitwarden
           secrets: "BW-GHAPP-ID,BW-GHAPP-KEY"
 
       - name: Log out from Azure
-        uses: bitwarden/gh-actions/azure-logout@main
+        uses: bitwarden/gh-actions/azure-logout@a4d7e7617778ff521fcb036231f4f619607d5459 # main
 
       - name: Generate GH App token
         uses: actions/create-github-app-token@30bf6253fa41bdc8d1501d202ad15287582246b4 # v2.0.3
@@ -58,7 +58,7 @@ jobs:
 
       - name: Calculate next Desktop release version
         id: calculate-next-desktop-version
-        uses: bitwarden/gh-actions/version-next@main
+        uses: bitwarden/gh-actions/version-next@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           version: ${{ steps.current-desktop-version.outputs.version }}
 

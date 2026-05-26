@@ -44,7 +44,7 @@ jobs:
 
       - name: Check Release Version
         id: version
-        uses: bitwarden/gh-actions/release-version-check@main
+        uses: bitwarden/gh-actions/release-version-check@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           release-type: ${{ inputs.publish_type }}
           project-type: ts
@@ -80,7 +80,7 @@ jobs:
 
       ########## ACR ##########
       - name: Log in to Azure
-        uses: bitwarden/gh-actions/azure-login@main
+        uses: bitwarden/gh-actions/azure-login@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant_id: ${{ secrets.AZURE_TENANT_ID }}
@@ -134,7 +134,7 @@ jobs:
           fi
 
       - name: Log out from Azure
-        uses: bitwarden/gh-actions/azure-logout@main
+        uses: bitwarden/gh-actions/azure-logout@a4d7e7617778ff521fcb036231f4f619607d5459 # main
 
       - name: Update deployment status to Success
         if: ${{ inputs.publish_type != 'Dry Run' && success() }}
@@ -174,7 +174,7 @@ jobs:
 
       - name: Retrieve GitHub PAT secrets
         id: retrieve-secret-pat
-        uses: bitwarden/gh-actions/get-keyvault-secrets@main
+        uses: bitwarden/gh-actions/get-keyvault-secrets@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           keyvault: "bitwarden-ci"
           secrets: "github-pat-bitwarden-devops-bot-repo-scope"

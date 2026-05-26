@@ -197,7 +197,7 @@ jobs:
     steps:
       - name: 'Download latest cloud asset using GitHub Run ID: ${{ inputs.build-web-run-id }}'
         if: ${{ inputs.build-web-run-id }}
-        uses: bitwarden/gh-actions/download-artifacts@main
+        uses: bitwarden/gh-actions/download-artifacts@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         id: download-latest-artifacts-run-id
         continue-on-error: true
         with:
@@ -221,7 +221,7 @@ jobs:
 
       - name: Log in to Azure
         if: ${{ steps.download-latest-artifacts.outcome == 'failure' }}
-        uses: bitwarden/gh-actions/azure-login@main
+        uses: bitwarden/gh-actions/azure-login@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant_id: ${{ secrets.AZURE_TENANT_ID }}
@@ -230,14 +230,14 @@ jobs:
       - name: Retrieve secrets for Build trigger
         if: ${{ steps.download-latest-artifacts.outcome == 'failure' }}
         id: retrieve-secret
-        uses: bitwarden/gh-actions/get-keyvault-secrets@main
+        uses: bitwarden/gh-actions/get-keyvault-secrets@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           keyvault: "bitwarden-ci"
           secrets: "github-pat-bitwarden-devops-bot-repo-scope"
 
       - name: Log out from Azure
         if: ${{ steps.download-latest-artifacts.outcome == 'failure' }}
-        uses: bitwarden/gh-actions/azure-logout@main
+        uses: bitwarden/gh-actions/azure-logout@a4d7e7617778ff521fcb036231f4f619607d5459 # main
 
       - name: 'Trigger build web for missing branch/tag ${{ inputs.branch-or-tag }}'
         if: ${{ steps.download-latest-artifacts.outcome == 'failure' }}
@@ -290,7 +290,7 @@ jobs:
       ts: ${{ steps.slack-message.outputs.ts }}
     steps:
       - name: Notify Slack with start message
-        uses: bitwarden/gh-actions/report-deployment-status-to-slack@main
+        uses: bitwarden/gh-actions/report-deployment-status-to-slack@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         id: slack-message
         with:
           project: Clients
