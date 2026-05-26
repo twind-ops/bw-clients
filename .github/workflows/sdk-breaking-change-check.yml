@@ -25,14 +25,14 @@ jobs:
 
     steps:
       - name: Log in to Azure
-        uses: bitwarden/gh-actions/azure-login@main
+        uses: bitwarden/gh-actions/azure-login@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant_id: ${{ secrets.AZURE_TENANT_ID }}
           client_id: ${{ secrets.AZURE_CLIENT_ID }}
       - name: Get Azure Key Vault secrets
         id: get-kv-secrets
-        uses: bitwarden/gh-actions/get-keyvault-secrets@main
+        uses: bitwarden/gh-actions/get-keyvault-secrets@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           keyvault: gh-org-bitwarden
           secrets: "BW-GHAPP-ID,BW-GHAPP-KEY"
@@ -44,7 +44,7 @@ jobs:
           app-id: ${{ steps.get-kv-secrets.outputs.BW-GHAPP-ID }}
           private-key: ${{ steps.get-kv-secrets.outputs.BW-GHAPP-KEY }}
       - name: Log out from Azure
-        uses: bitwarden/gh-actions/azure-logout@main
+        uses: bitwarden/gh-actions/azure-logout@a4d7e7617778ff521fcb036231f4f619607d5459 # main
       - name: Validate inputs
         run: |
           echo "🔍 Validating required client_payload fields..."
@@ -104,7 +104,7 @@ jobs:
           fi
 
       - name: Download SDK artifacts
-        uses: bitwarden/gh-actions/download-artifacts@main
+        uses: bitwarden/gh-actions/download-artifacts@a4d7e7617778ff521fcb036231f4f619607d5459 # main
         with:
           github_token: ${{ steps.app-token.outputs.token }}
           workflow: build-wasm-internal.yml
