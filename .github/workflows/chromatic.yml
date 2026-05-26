@@ -6,7 +6,7 @@ on:
       - "main"
       - "rc"
       - "hotfix-rc"
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
     branches:
       - "main"
