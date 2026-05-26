@@ -2,16 +2,12 @@ name: Autofill BIT checks
 run-name: Autofill BIT checks on ${{ github.event.workflow_run.head_branch }} build
 
 on:
-  workflow_run:
-    workflows: ["Build Browser"]
-    types:
-      - completed
+  workflow_dispatch:
 
 jobs:
   check-files:
     name: Check files
     runs-on: ubuntu-22.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       actions: write
       contents: read
