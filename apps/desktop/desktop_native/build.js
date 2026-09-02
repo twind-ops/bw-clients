@@ -29,7 +29,13 @@ function buildNapiModule(target, release = true) {
     const args = ['run', 'build', '--'];
     if (release) args.push('--release');
     if (target) args.push('--target', target);
-    child_process.execFileSync('npm', args, { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    // On Windows, `npm` is `npm.cmd`, which CreateProcess cannot launch
+    // directly — spawnSync needs shell: true to invoke it via cmd.exe.
+    child_process.execFileSync('npm', args, {
+        stdio: 'inherit',
+        cwd: path.join(__dirname, "napi"),
+        shell: process.platform === "win32",
+    });
 }
 
 function buildProxyBin(target, release = true) {
