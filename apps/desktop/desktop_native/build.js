@@ -29,7 +29,9 @@ function buildNapiModule(target, release = true) {
     const args = ['run', 'build', '--'];
     if (release) args.push('--release');
     if (target) args.push('--target', target);
-    child_process.execFileSync('npm', args, { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    // `npm` is a .cmd shim on Windows; execFileSync bypasses PATHEXT resolution and errors ENOENT unless we name it explicitly.
+    const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    child_process.execFileSync(npmCmd, args, { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
 }
 
 function buildProxyBin(target, release = true) {
