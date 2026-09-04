@@ -26,15 +26,19 @@ const target = targetArg ? targetArg.split("=")[1] : null;
 let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platform";
 
 function buildNapiModule(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    const args = ['run', 'build', '--'];
+    if (release) args.push('--release');
+    if (target) args.push('--target', target);
+    // `npm` is a .cmd shim on Windows; execFileSync bypasses PATHEXT resolution and errors ENOENT unless we name it explicitly.
+    const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    child_process.execFileSync(npmCmd, args, { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
 }
 
 function buildProxyBin(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
+    const args = ['build', '--bin', 'desktop_proxy'];
+    if (release) args.push('--release');
+    if (target) args.push('--target', target);
+    child_process.execFileSync('cargo', args, {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
 
     if (target) {
         // Copy the resulting binary to the dist folder
@@ -52,9 +56,10 @@ function buildImporterBinaries(target, release = true) {
     }
 
     const bin = "bitwarden_chromium_import_helper";
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []));
+    const args = ['build', '--bin', bin];
+    if (release) args.push('--release');
+    if (target) args.push('--target', target);
+    child_process.execFileSync('cargo', args);
 
     if (target) {
         // Copy the resulting binary to the dist folder
