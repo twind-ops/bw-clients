@@ -755,7 +755,9 @@ pub mod autofill {
             #[napi(
                 ts_arg_type = "(error: null | Error, clientId: number, sequenceNumber: number, message: PasskeyAssertionRequest) => void"
             )]
-            assertion_callback: ThreadsafeFunction<FnArgs<(u32, u32, PasskeyAssertionRequest)>>,
+            assertion_callback: ThreadsafeFunction<
+                FnArgs<(u32, u32, PasskeyAssertionRequest)>,
+            >,
             #[napi(
                 ts_arg_type = "(error: null | Error, clientId: number, sequenceNumber: number, message: PasskeyAssertionWithoutUserInterfaceRequest) => void"
             )]

@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "build": "napi build --platform --no-js",
-    "test": "cargo test"
+    "test": "cargo test",
+    "test:smoke": "node smoke-test.mjs"
   },
   "author": "",
   "license": "GPL-3.0",

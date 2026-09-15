@@ -26,15 +26,15 @@ const target = targetArg ? targetArg.split("=")[1] : null;
 let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platform";
 
 function buildNapiModule(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArgs).concat(targetArgs), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
 }
 
 function buildProxyBin(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArgs).concat(targetArgs), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
 
     if (target) {
         // Copy the resulting binary to the dist folder
@@ -52,9 +52,9 @@ function buildImporterBinaries(target, release = true) {
     }
 
     const bin = "bitwarden_chromium_import_helper";
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []));
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArgs).concat(targetArgs));
 
     if (target) {
         // Copy the resulting binary to the dist folder
