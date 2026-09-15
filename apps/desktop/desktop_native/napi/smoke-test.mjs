@@ -19,7 +19,7 @@
 // Run:  node smoke-test.mjs   (after `npm run build`)
 
 import { strict as assert } from "node:assert";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -27,17 +27,25 @@ import { dirname, join } from "node:path";
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
 
-const platform = process.platform;
-const arch = process.arch;
-const libc = platform === "linux" ? "-gnu" : "";
-const candidate = join(here, `desktop_napi.${platform}-${arch}${libc}.node`);
-if (!existsSync(candidate)) {
+// Load through the checked-in `index.js` shim: it already knows every
+// platform / arch / libc combination the CLI emits (linux-x64-gnu vs
+// linux-x64-musl, win32-x64-msvc, darwin-arm64, ...). Trying to reconstruct
+// the suffix here would silently pick the wrong file on musl-CI and Windows
+// runners.
+let napi;
+try {
+  napi = require(join(here, "index.js"));
+} catch (err) {
+  const builtNodeFiles = existsSync(here)
+    ? readdirSync(here).filter((f) => f.endsWith(".node"))
+    : [];
   console.error(
-    `smoke-test: expected built binary at ${candidate}. Run \`npm run build\` first.`,
+    "smoke-test: index.js could not load a napi binary. " +
+      `Run \`npm run build\` first. Cause: ${err && err.message ? err.message : err}. ` +
+      `Node modules present: ${builtNodeFiles.join(", ") || "(none)"}.`,
   );
   process.exit(2);
 }
-const napi = require(candidate);
 
 const EXPECTED_NAMESPACES = [
   "autofill",

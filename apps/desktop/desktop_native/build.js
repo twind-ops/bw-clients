@@ -25,16 +25,38 @@ const target = targetArg ? targetArg.split("=")[1] : null;
 
 let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platform";
 
+// `execFileSync` on Windows does not resolve shell-installed shims: `npm` is
+// `npm.cmd`, not `npm.exe`, so passing the bare name yields ENOENT. Node only
+// finds the .cmd form when the launcher is asked for it explicitly.
+const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
+
+// napi-sys >= 3.3 always links `libloading`, which pulls in libdl.so.2 and
+// libgcc_s.so.1 on Linux. The `-unknown-linux-musl` toolchains that ship with
+// the GitHub `ubuntu-*-arm` runners do not include libgcc_s, so the link step
+// fails with `cannot find libgcc_s.so.1`. A fully-static CRT makes the linker
+// take musl's bundled libgcc_eh archive instead.
+const MUSL_TARGETS = new Set([
+    "x86_64-unknown-linux-musl",
+    "aarch64-unknown-linux-musl",
+]);
+function envForTarget(target) {
+    if (target && MUSL_TARGETS.has(target)) {
+        const existing = process.env.RUSTFLAGS ? `${process.env.RUSTFLAGS} ` : "";
+        return { ...process.env, RUSTFLAGS: `${existing}-Ctarget-feature=+crt-static` };
+    }
+    return process.env;
+}
+
 function buildNapiModule(target, release = true) {
     const targetArgs = target ? ["--target", target] : [];
     const releaseArgs = release ? ["--release"] : [];
-    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArgs).concat(targetArgs), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    child_process.execFileSync(npmBin, ['run', 'build', '--'].concat(releaseArgs).concat(targetArgs), { stdio: 'inherit', cwd: path.join(__dirname, "napi"), env: envForTarget(target) });
 }
 
 function buildProxyBin(target, release = true) {
     const targetArgs = target ? ["--target", target] : [];
     const releaseArgs = release ? ["--release"] : [];
-    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArgs).concat(targetArgs), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
+    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArgs).concat(targetArgs), {stdio: 'inherit', cwd: path.join(__dirname, "proxy"), env: envForTarget(target)});
 
     if (target) {
         // Copy the resulting binary to the dist folder
