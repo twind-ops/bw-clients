@@ -208,8 +208,7 @@ mod tests {
             assert_eq!(
                 original_key.as_ref(),
                 retrieved_key.as_ref(),
-                "Key {} should match after storage and retrieval",
-                i
+                "Key {i} should match after storage and retrieval"
             );
         }
 
@@ -219,9 +218,7 @@ mod tests {
                 assert_ne!(
                     original_keys[i].as_ref(),
                     original_keys[j].as_ref(),
-                    "Keys {} and {} should be different",
-                    i,
-                    j
+                    "Keys {i} and {j} should be different"
                 );
             }
         }
@@ -234,8 +231,7 @@ mod tests {
             assert_eq!(
                 original_key.as_ref(),
                 retrieved_key_again.as_ref(),
-                "Key {} should still match on second retrieval",
-                i
+                "Key {i} should still match on second retrieval"
             );
         }
     }
