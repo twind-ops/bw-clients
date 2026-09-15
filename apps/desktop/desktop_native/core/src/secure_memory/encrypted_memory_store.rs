@@ -78,15 +78,14 @@ mod tests {
     fn test_secret_kv_store_various_sizes() {
         let mut store = EncryptedMemoryStore::new();
         for size in 0..=2048 {
-            let key = format!("test_key_{}", size);
+            let key = format!("test_key_{size}");
             let value: Vec<u8> = (0..size).map(|i| (i % 256) as u8).collect();
             store.put(key.clone(), &value);
-            assert!(store.has(&key), "Store should have key for size {}", size);
+            assert!(store.has(&key), "Store should have key for size {size}");
             assert_eq!(
                 store.get(&key),
                 Some(value),
-                "Value mismatch for size {}",
-                size
+                "Value mismatch for size {size}"
             );
         }
     }

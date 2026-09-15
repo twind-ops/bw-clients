@@ -14,7 +14,7 @@ fn make_id() -> String {
     let counter = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     // In case multiple processes are running, include the PID in the key ID.
     let pid = std::process::id();
-    format!("bitwarden_desktop_{}_{}", pid, counter)
+    format!("bitwarden_desktop_{pid}_{counter}")
 }
 
 /// A secure key container that uses the Linux kernel keyctl API to store the key.

@@ -286,10 +286,7 @@ pub mod clipboards {
 pub mod sshagent {
     use std::sync::Arc;
 
-    use napi::{
-        bindgen_prelude::Promise,
-        threadsafe_function::{ErrorStrategy::CalleeHandled, ThreadsafeFunction},
-    };
+    use napi::{bindgen_prelude::Promise, threadsafe_function::ThreadsafeFunction};
     use tokio::{self, sync::Mutex};
     use tracing::error;
 
@@ -324,13 +321,14 @@ pub mod sshagent {
     #[allow(clippy::unused_async)] // FIXME: Remove unused async!
     #[napi]
     pub async fn serve(
-        callback: ThreadsafeFunction<SshUIRequest, CalleeHandled>,
+        callback: ThreadsafeFunction<SshUIRequest, Promise<bool>>,
     ) -> napi::Result<SshAgentState> {
         let (auth_request_tx, mut auth_request_rx) =
             tokio::sync::mpsc::channel::<desktop_core::ssh_agent::SshAgentUIRequest>(32);
         let (auth_response_tx, auth_response_rx) =
             tokio::sync::broadcast::channel::<(u32, bool)>(32);
         let auth_response_tx_arc = Arc::new(Mutex::new(auth_response_tx));
+        let callback = Arc::new(callback);
         tokio::spawn(async move {
             let _ = auth_response_rx;
 
@@ -463,14 +461,12 @@ pub mod processisolations {
 #[napi]
 pub mod powermonitors {
     use napi::{
-        threadsafe_function::{
-            ErrorStrategy::CalleeHandled, ThreadsafeFunction, ThreadsafeFunctionCallMode,
-        },
+        threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
         tokio,
     };
 
     #[napi]
-    pub async fn on_lock(callback: ThreadsafeFunction<(), CalleeHandled>) -> napi::Result<()> {
+    pub async fn on_lock(callback: ThreadsafeFunction<()>) -> napi::Result<()> {
         let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(32);
         desktop_core::powermonitor::on_lock(tx)
             .await
@@ -509,9 +505,7 @@ pub mod windows_registry {
 #[napi]
 pub mod ipc {
     use desktop_core::ipc::server::{Message, MessageType};
-    use napi::threadsafe_function::{
-        ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode,
-    };
+    use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
 
     #[napi(object)]
     pub struct IpcMessage {
@@ -563,7 +557,7 @@ pub mod ipc {
         pub async fn listen(
             name: String,
             #[napi(ts_arg_type = "(error: null | Error, message: IpcMessage) => void")]
-            callback: ThreadsafeFunction<IpcMessage, ErrorStrategy::CalleeHandled>,
+            callback: ThreadsafeFunction<IpcMessage>,
         ) -> napi::Result<Self> {
             let (send, mut recv) = tokio::sync::mpsc::channel::<Message>(32);
             tokio::spawn(async move {
@@ -626,8 +620,9 @@ pub mod autostart {
 #[napi]
 pub mod autofill {
     use desktop_core::ipc::server::{Message, MessageType};
-    use napi::threadsafe_function::{
-        ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode,
+    use napi::{
+        bindgen_prelude::FnArgs,
+        threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
     };
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
     use tracing::error;
@@ -755,22 +750,19 @@ pub mod autofill {
                 ts_arg_type = "(error: null | Error, clientId: number, sequenceNumber: number, message: PasskeyRegistrationRequest) => void"
             )]
             registration_callback: ThreadsafeFunction<
-                (u32, u32, PasskeyRegistrationRequest),
-                ErrorStrategy::CalleeHandled,
+                FnArgs<(u32, u32, PasskeyRegistrationRequest)>,
             >,
             #[napi(
                 ts_arg_type = "(error: null | Error, clientId: number, sequenceNumber: number, message: PasskeyAssertionRequest) => void"
             )]
             assertion_callback: ThreadsafeFunction<
-                (u32, u32, PasskeyAssertionRequest),
-                ErrorStrategy::CalleeHandled,
+                FnArgs<(u32, u32, PasskeyAssertionRequest)>,
             >,
             #[napi(
                 ts_arg_type = "(error: null | Error, clientId: number, sequenceNumber: number, message: PasskeyAssertionWithoutUserInterfaceRequest) => void"
             )]
             assertion_without_user_interface_callback: ThreadsafeFunction<
-                (u32, u32, PasskeyAssertionWithoutUserInterfaceRequest),
-                ErrorStrategy::CalleeHandled,
+                FnArgs<(u32, u32, PasskeyAssertionWithoutUserInterfaceRequest)>,
             >,
         ) -> napi::Result<Self> {
             let (send, mut recv) = tokio::sync::mpsc::channel::<Message>(32);
@@ -796,7 +788,9 @@ pub mod autofill {
                                 Ok(msg) => {
                                     let value = msg
                                         .value
-                                        .map(|value| (client_id, msg.sequence_number, value))
+                                        .map(|value| {
+                                            FnArgs::from((client_id, msg.sequence_number, value))
+                                        })
                                         .map_err(|e| napi::Error::from_reason(format!("{e:?}")));
 
                                     assertion_callback
@@ -815,7 +809,9 @@ pub mod autofill {
                                 Ok(msg) => {
                                     let value = msg
                                         .value
-                                        .map(|value| (client_id, msg.sequence_number, value))
+                                        .map(|value| {
+                                            FnArgs::from((client_id, msg.sequence_number, value))
+                                        })
                                         .map_err(|e| napi::Error::from_reason(format!("{e:?}")));
 
                                     assertion_without_user_interface_callback
@@ -833,7 +829,9 @@ pub mod autofill {
                                 Ok(msg) => {
                                     let value = msg
                                         .value
-                                        .map(|value| (client_id, msg.sequence_number, value))
+                                        .map(|value| {
+                                            FnArgs::from((client_id, msg.sequence_number, value))
+                                        })
                                         .map_err(|e| napi::Error::from_reason(format!("{e:?}")));
                                     registration_callback
                                         .call(value, ThreadsafeFunctionCallMode::NonBlocking);
@@ -951,8 +949,9 @@ pub mod logging {
     use std::fmt::Write;
     use std::sync::OnceLock;
 
-    use napi::threadsafe_function::{
-        ErrorStrategy::CalleeHandled, ThreadsafeFunction, ThreadsafeFunctionCallMode,
+    use napi::{
+        bindgen_prelude::FnArgs,
+        threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
     };
     use tracing::Level;
     use tracing_subscriber::fmt::format::{DefaultVisitor, Writer};
@@ -963,7 +962,7 @@ pub mod logging {
         Layer,
     };
 
-    struct JsLogger(OnceLock<ThreadsafeFunction<(LogLevel, String), CalleeHandled>>);
+    struct JsLogger(OnceLock<ThreadsafeFunction<FnArgs<(LogLevel, String)>>>);
     static JS_LOGGER: JsLogger = JsLogger(OnceLock::new());
 
     #[napi]
@@ -1035,13 +1034,13 @@ pub mod logging {
             let msg = (event.metadata().level().into(), buffer);
 
             if let Some(logger) = JS_LOGGER.0.get() {
-                let _ = logger.call(Ok(msg), ThreadsafeFunctionCallMode::NonBlocking);
+                let _ = logger.call(Ok(msg.into()), ThreadsafeFunctionCallMode::NonBlocking);
             };
         }
     }
 
     #[napi]
-    pub fn init_napi_log(js_log_fn: ThreadsafeFunction<(LogLevel, String), CalleeHandled>) {
+    pub fn init_napi_log(js_log_fn: ThreadsafeFunction<FnArgs<(LogLevel, String)>>) {
         let _ = JS_LOGGER.0.set(js_log_fn);
 
         let filter = EnvFilter::builder()
@@ -1103,8 +1102,8 @@ pub mod chromium_importer {
     #[napi(object)]
     pub struct NativeImporterMetadata {
         pub id: String,
-        pub loaders: Vec<&'static str>,
-        pub instructions: &'static str,
+        pub loaders: Vec<String>,
+        pub instructions: String,
     }
 
     impl From<_LoginImportResult> for LoginImportResult {
@@ -1144,8 +1143,8 @@ pub mod chromium_importer {
         fn from(m: _NativeImporterMetadata) -> Self {
             NativeImporterMetadata {
                 id: m.id,
-                loaders: m.loaders,
-                instructions: m.instructions,
+                loaders: m.loaders.into_iter().map(String::from).collect(),
+                instructions: m.instructions.to_string(),
             }
         }
     }

@@ -25,16 +25,44 @@ const target = targetArg ? targetArg.split("=")[1] : null;
 
 let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platform";
 
+// `execFileSync` on Windows does not resolve shell-installed shims: `npm` is
+// `npm.cmd`, not `npm.exe`, so passing the bare name yields ENOENT. Node
+// >=21.11 additionally refuses to exec .cmd/.bat without `shell: true`
+// (spawnSync EINVAL). Set both to keep the launcher happy on every runner.
+const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
+const spawnOpts = process.platform === "win32" ? { shell: true } : {};
+
+// napi-sys >= 3.3 always links `libloading`, which on Linux ends up requesting
+// `libgcc_s.so.1` from the linker as part of the unwind-panic runtime. The
+// `-unknown-linux-musl` toolchains that ship with the GitHub `ubuntu-*` /
+// `ubuntu-*-arm` runners do not stage that library under the musl sysroot,
+// so the link step fails with `cannot find libgcc_s.so.1`. `+crt-static`
+// avoids the .so lookup but disables cdylib, which is what napi outputs, so
+// pass `-static-libgcc` to the linker instead: it satisfies the same runtime
+// need out of libgcc.a (bundled with the musl toolchain) and leaves cdylib
+// on the table.
+const MUSL_TARGETS = new Set([
+    "x86_64-unknown-linux-musl",
+    "aarch64-unknown-linux-musl",
+]);
+function envForTarget(target) {
+    if (target && MUSL_TARGETS.has(target)) {
+        const existing = process.env.RUSTFLAGS ? `${process.env.RUSTFLAGS} ` : "";
+        return { ...process.env, RUSTFLAGS: `${existing}-Clink-arg=-static-libgcc` };
+    }
+    return process.env;
+}
+
 function buildNapiModule(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync(npmBin, ['run', 'build', '--'].concat(releaseArgs).concat(targetArgs), { stdio: 'inherit', cwd: path.join(__dirname, "napi"), env: envForTarget(target), ...spawnOpts });
 }
 
 function buildProxyBin(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArgs).concat(targetArgs), {stdio: 'inherit', cwd: path.join(__dirname, "proxy"), env: envForTarget(target)});
 
     if (target) {
         // Copy the resulting binary to the dist folder
@@ -52,9 +80,9 @@ function buildImporterBinaries(target, release = true) {
     }
 
     const bin = "bitwarden_chromium_import_helper";
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []));
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArgs).concat(targetArgs));
 
     if (target) {
         // Copy the resulting binary to the dist folder
