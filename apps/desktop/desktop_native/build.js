@@ -25,10 +25,15 @@ const target = targetArg ? targetArg.split("=")[1] : null;
 
 let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platform";
 
+// On Windows `npm` is a .cmd shim, which execFileSync cannot spawn without a shell
+// (Node refuses to run .cmd/.bat directly since the CVE-2024-27980 fix). Only npm needs
+// this; cargo and rustup are real .exe files.
+const needsShellForNpm = process.platform === "win32";
+
 function buildNapiModule(target, release = true) {
     const targetArgs = target ? ["--target", target] : [];
     const releaseArgs = release ? ["--release"] : [];
-    child_process.execFileSync('npm', ['run', 'build', '--', ...releaseArgs, ...targetArgs], { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    child_process.execFileSync('npm', ['run', 'build', '--', ...releaseArgs, ...targetArgs], { stdio: 'inherit', cwd: path.join(__dirname, "napi"), shell: needsShellForNpm });
 }
 
 function buildProxyBin(target, release = true) {
