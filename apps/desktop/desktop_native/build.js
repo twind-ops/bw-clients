@@ -25,16 +25,21 @@ const target = targetArg ? targetArg.split("=")[1] : null;
 
 let crossPlatform = process.argv.length > 2 && process.argv[2] === "cross-platform";
 
+// On Windows `npm` is a .cmd shim, which execFileSync cannot spawn without a shell
+// (Node refuses to run .cmd/.bat directly since the CVE-2024-27980 fix). Only npm needs
+// this; cargo and rustup are real .exe files.
+const needsShellForNpm = process.platform === "win32";
+
 function buildNapiModule(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('npm', ['run', 'build', '--'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), { stdio: 'inherit', cwd: path.join(__dirname, "napi") });
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('npm', ['run', 'build', '--', ...releaseArgs, ...targetArgs], { stdio: 'inherit', cwd: path.join(__dirname, "napi"), shell: needsShellForNpm });
 }
 
 function buildProxyBin(target, release = true) {
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy'].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []), {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('cargo', ['build', '--bin', 'desktop_proxy', ...releaseArgs, ...targetArgs], {stdio: 'inherit', cwd: path.join(__dirname, "proxy")});
 
     if (target) {
         // Copy the resulting binary to the dist folder
@@ -52,9 +57,9 @@ function buildImporterBinaries(target, release = true) {
     }
 
     const bin = "bitwarden_chromium_import_helper";
-    const targetArg = target ? `--target ${target}` : "";
-    const releaseArg = release ? "--release" : "";
-    child_process.execFileSync('cargo', ['build', '--bin', bin].concat(releaseArg ? [releaseArg] : []).concat(targetArg ? [targetArg] : []));
+    const targetArgs = target ? ["--target", target] : [];
+    const releaseArgs = release ? ["--release"] : [];
+    child_process.execFileSync('cargo', ['build', '--bin', bin, ...releaseArgs, ...targetArgs]);
 
     if (target) {
         // Copy the resulting binary to the dist folder
